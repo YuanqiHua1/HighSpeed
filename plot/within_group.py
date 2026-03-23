@@ -1,6 +1,13 @@
 '''
 plot group vs group within stimulus
 '''
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import os
+from .stat import add_sig, star, holm_correction,darken
+from scipy.stats import f_oneway, ttest_ind
+
 def within_group(folder,ycol,Ylabel,df_swim_clean, df_fish_clean):
 
     os.makedirs(folder, exist_ok=True)  # ⭐ 自动创建文件夹

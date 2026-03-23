@@ -5,6 +5,7 @@
 '''
 from scipy.stats import f_oneway, ttest_ind
 import matplotlib.colors as mcolors
+import numpy as np
 
 def holm_correction(pvals):
     pvals = np.array(pvals)

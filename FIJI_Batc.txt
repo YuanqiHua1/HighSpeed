@@ -1,0 +1,95 @@
+// ================== 你只需要修改这两行路径 ==================
+baseDir   = "U:/YuanqiHua/High speed/260127 dmrt3 MTZ/";
+outputDir = "U:/YuanqiHua/High speed/260127 dmrt3 MTZ/AVI_out/";
+// ============================================================
+
+File.makeDirectory(outputDir);
+setBatchMode(true);
+
+folders = getFileList(baseDir);
+
+for (i = 0; i < folders.length; i++) {
+
+    folderName = folders[i];
+    if (endsWith(folderName, "/") || endsWith(folderName, "\\"))
+        folderName = substring(folderName, 0, lengthOf(folderName) - 1);
+
+    folderPath = baseDir + File.separator + folderName;
+
+    if (!File.isDirectory(folderPath)) {
+        print("Skip (not dir): " + folderPath);
+        continue;
+    }
+
+    print("==== Folder: " + folderName + " ====");
+
+    // --- A) 检查该文件夹里是否存在 jpg/jpeg ---
+    fileList = getFileList(folderPath);
+    hasJpg = false;
+    for (j = 0; j < fileList.length; j++) {
+        f = toLowerCase(fileList[j]);
+        if (endsWith(f, ".jpg") || endsWith(f, ".jpeg")) { hasJpg = true; break; }
+    }
+    if (!hasJpg) {
+        print("Skip (no JPG/JPEG): " + folderName);
+        continue;
+    }
+
+    // 生成输出基础名
+
+// ---- 0) 去掉最后的 _000000 ----
+p3 = lastIndexOf(folderName, "_");
+core = substring(folderName, 0, p3);   // 2026-01-22_wt1-MTZ-6_1
+
+// ---- 1) swimID：最后一个 "_" 后 ----
+p2 = lastIndexOf(core, "_");
+swimID = substring(core, p2 + 1);      // 1
+
+// ---- 2) 去掉最后的 "_swimID"，得到 ...wt1-MTZ-6 ----
+core2 = substring(core, 0, p2);        // 2026-01-22_wt1-MTZ-6
+
+// ---- 3) fishID：最后一个 "-" 后（注意是 "-"）----
+pLastDash = lastIndexOf(core2, "-");
+fishID = substring(core2, pLastDash + 1);   // 6
+
+// ---- 4) baseCond：日期后 "_" 到最后一个 "-" 之前 ----
+pDate = indexOf(core2, "_");
+baseCond = substring(core2, pDate + 1, pLastDash); // wt1-MTZ
+
+// ---- 5) 最终标题 ----
+newTitle = baseCond + "-" + fishID + "_" + swimID; // wt1-MTZ-6_1
+
+
+    // --- B) openSequence 更稳：目录末尾补分隔符 ---
+    if (!endsWith(folderPath, "/") && !endsWith(folderPath, "\\"))
+        folderPath = folderPath + File.separator;
+
+    // ---- 1) 导入 JPG 序列为 stack ----
+    File.openSequence(folderPath);
+
+    origTitle = getTitle();
+    if (origTitle == "") {
+        print("Failed to open sequence: " + folderName);
+        continue;
+    }
+
+    // ---- 2) Scale 并 create ----
+    run("Scale...", "x=- y=- z=1.0 width=1280 height=960 interpolation=Bilinear average process create title=[" + newTitle + "]");
+
+    // 关闭原始序列窗口
+    selectImage(origTitle);
+    close();
+
+    // ---- 3) 导出 AVI ----
+    // （可选但更稳：用当前标题，避免 newTitle 被 Fiji 自动加 -1）
+    scaledTitle = getTitle();
+    selectImage(scaledTitle);
+
+    outPath = outputDir + File.separator + newTitle + ".avi";
+    run("AVI... ", "compression=JPEG frame=1000 save=[" + outPath + "]");
+
+    close();
+}
+
+setBatchMode(false);
+print("DONE.");
